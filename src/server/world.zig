@@ -1231,6 +1231,11 @@ pub const ServerWorld = struct { // MARK: ServerWorld
 
 			var neighborBlock = ch.getBlock(neighborPos.x, neighborPos.y, neighborPos.z);
 			if (neighborBlock.mode().dependsOnNeighbors and neighborBlock.mode().updateData(&neighborBlock, neighbor.reverse(), newBlock)) {
+				if (neighborBlock != newBlock) {
+					if (neighborBlock.blockEntity()) |blockEntity| blockEntity.updateServerData(.{neighborPos.x, neighborPos.y, neighborPos.z}, &ch.super, .remove) catch |err| {
+						std.log.err("Got error {s} while trying to remove entity data in position {} for block {s} which is neighbor of block {s} in position {}", .{@errorName(err), Vec3i{neighborPos.x, neighborPos.y, neighborPos.z}, neighborBlock.id(), currentBlock.id(), Vec3i{wx, wy, wz}});
+					};
+				}
 				ch.updateBlockAndSetChanged(neighborPos.x, neighborPos.y, neighborPos.z, neighborBlock);
 			}
 			if (newBlock.mode().dependsOnNeighbors) {
