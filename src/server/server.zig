@@ -639,8 +639,12 @@ fn update() void { // MARK: update()
 	}
 
 	while (userDeinitList.popFront()) |user| {
+		std.log.debug("Processing {s}... Ref count: {d}", .{user.name, user.refCount.load(.monotonic)});
 		if (user.refCount.load(.monotonic) == 1) {
+			std.log.debug("Processing removing {s}...", .{user.name});
+			removePlayer(user);
 			user.decreaseRefCount();
+			user.connected.store(false, .monotonic);
 		} else {
 			userDeinitList.pushBack(user);
 			break;
@@ -678,10 +682,9 @@ pub fn stop() void {
 }
 
 pub fn disconnect(user: *User) void { // MARK: disconnect()
+	std.log.debug("Disconnecting player {s}...", .{user.name});
 	if (!user.connected.load(.monotonic)) return;
-	removePlayer(user);
 	userDeinitList.pushBack(user);
-	user.connected.store(false, .monotonic);
 }
 
 pub fn removePlayer(user: *User) void { // MARK: removePlayer()
